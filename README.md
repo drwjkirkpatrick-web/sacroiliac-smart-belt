@@ -19,7 +19,8 @@ accounting for an estimated 15–30% of cases[1], with SIJ dysfunction a
 primary pain source in 10–25% of affected patients[2]. Trauma — including
 the posttraumatic arthritis that can follow motor vehicle collisions — is
 a recognized pathway[3]. And the people who hurt most are the ones whose
-*clothing* betrays them.
+*clothing* betrays them — garment fit genuinely changes between standing and
+sitting.[11]
 
 Belts are the right conservative tool: a small-force pelvic belt generates
 a self-bracing effect at the SIJ[19], belt application significantly
@@ -42,7 +43,7 @@ simulated day of standing, commuting, and desk work; 588,000 control ticks):
 - Seated adverse SIJ load: **80,579 N·s (static belt) → 8,642 N·s (smart) — an 89.3% reduction**
 - The static belt's seated tension peaks at **28.0 N — 3.5× its standing 8 N** — that is ordinary clothing hurting you
 - **99.98%** of seated time at or under the 3 N comfort floor
-- **Zero** safety-rule violations; ~1.95 mAh used (≈150 days on a 300 mAh cell)
+- **Zero** safety-rule violations; ~1.95 mAh used (≈150 days on a 300 mAh cell)[unverified]
 
 Full analysis: **[docs/paper/paper.pdf](docs/paper/paper.pdf)** — a 7-page
 LaTeX paper with the complete evidence base, methods, and results.
@@ -94,7 +95,8 @@ targets, timing, all of it — and stores an opaque `wearer_id` only.
 
 ## Safety: fail loose, always
 
-The safe state of a belt is the *loosest* state. Every fault path — dead
+The safe state of a belt is the *loosest* state — and since extra tension
+buys no extra laxity reduction, loose risks nothing therapeutically.[4] Every fault path — dead
 sensor, stale estimate, low confidence, tension ceiling breach — ends at
 full loose, and the belt boots loose. Precedence: manual loosen > manual
 freeze > watchdog > ceiling > policy. A belt that fails loose cannot
@@ -122,7 +124,7 @@ is exactly what this project contributes.
 ## Hardware pathway
 
 The simulation carries an explicit mass and battery budget: ~95 g of
-electronics and actuator. The build plan (MCU, IMU, micro-servo ratchet,
+electronics and actuator.[unverified] The build plan (MCU, IMU, micro-servo ratchet,
 single-cell LiPo, fail-loose spring-return wiring) is in
 [docs/HARDWARE.md](docs/HARDWARE.md).
 
