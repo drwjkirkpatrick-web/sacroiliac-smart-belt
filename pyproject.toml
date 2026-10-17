@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sibelt"
+version = "0.1.0"
+description = "Posture-adaptive belt simulation and control for reducing adverse sacroiliac joint loading"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Hermes Agent" },
+    { name = "Walker Kirkpatrick, ND" },
+]
+keywords = ["sacroiliac", "posture", "wearable", "simulation", "assistive-technology"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+[project.scripts]
+sibelt = "sibelt.cli:main"
+
+[tool.setuptools]
+packages = ["sibelt"]
