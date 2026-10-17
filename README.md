@@ -1,4 +1,10 @@
-# 🔥 sacroiliac-smart-belt
+# 🦴 sacroiliac-smart-belt
+
+![tests](https://img.shields.io/badge/tests-127%20passing-brightgreen)
+![python](https://img.shields.io/badge/python-3.8%2B-3776ab)
+![dependencies](https://img.shields.io/badge/dependencies-stdlib%20only-success)
+![license](https://img.shields.io/badge/license-MIT-informational)
+![paper](https://img.shields.io/badge/paper-LaTeX%20PDF-blue)
 
 **A belt that knows when you sit — and gets out of your sacroiliac joints' way.**
 
