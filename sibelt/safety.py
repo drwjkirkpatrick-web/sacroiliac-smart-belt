@@ -106,7 +106,9 @@ class SafetyMonitor:
             return SafetyDecision(loosest, "fail-loose: watchdog", tuple(events))
 
         if estimate.activity is Activity.UNKNOWN:
-            if not self._low_conf_episode:
+            # Boot-time UNKNOWN (posture never yet acquired) is not a
+            # fault; losing a posture we HAD is.
+            if not self._low_conf_episode and estimate.acquired:
                 events.append(self._log(
                     t_s, EventKind.LOW_CONFIDENCE,
                     "classifier could not name the posture"))

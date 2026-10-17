@@ -94,7 +94,7 @@ class TestFaults:
 
     def test_unknown_fresh_goes_loose_via_policy(self):
         m = monitor()
-        est = PositionEstimate(Activity.UNKNOWN, 0.0, 0.0, 1.0, 0.0)
+        est = PositionEstimate(Activity.UNKNOWN, 0.0, 0.0, 1.0, 0.0, acquired=True)
         d = m.enforce(Command(985.0, "fail-loose: posture unknown"), est, 0.0,
                       OverrideMode.NONE, 1.0, 985.0)
         assert d.command_mm == 985.0
@@ -102,7 +102,7 @@ class TestFaults:
 
     def test_low_confidence_logs_once_per_episode(self):
         m = monitor()
-        est = PositionEstimate(Activity.UNKNOWN, 0.0, 0.0, 1.0, 0.0)
+        est = PositionEstimate(Activity.UNKNOWN, 0.0, 0.0, 1.0, 0.0, acquired=True)
         cmd = Command(985.0, "fail-loose: posture unknown")
         for _ in range(4):
             d = m.enforce(cmd, est, 0.0, OverrideMode.NONE, 1.0, 985.0)

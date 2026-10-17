@@ -34,6 +34,13 @@ class PositionEstimate:
     confidence: float
     t_s: float
     age_s: float
+    acquired: bool = False
+    """True once the classifier has EVER committed to a known posture.
+
+    Distinguishes "still acquiring at boot" from "lost a posture we
+    had" - the safety layer logs only the latter as a low-confidence
+    event.
+    """
 
 
 class PostureClassifier:
@@ -52,6 +59,7 @@ class PostureClassifier:
         self._candidate: Optional[Activity] = None
         self._candidate_since = 0.0
         self._last_data_t: Optional[float] = None
+        self._acquired = False
         self.switch_count = 0
 
     # -- internals -----------------------------------------------------
@@ -101,6 +109,7 @@ class PostureClassifier:
                         self._activity = nearest
                         self._candidate = None
                         self.switch_count += 1
+                        self._acquired = True
             # Low-confidence readings change nothing - that is the hysteresis.
 
         # Staleness: no fresh data at all -> UNKNOWN (the policy loosens).
@@ -124,4 +133,5 @@ class PostureClassifier:
             confidence=round(min(confidence, 1.0), 3),
             t_s=t_s,
             age_s=age,
+            acquired=self._acquired,
         )
