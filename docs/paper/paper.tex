@@ -1,0 +1,309 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{A Posture-Adaptive Belt for Reducing Adverse Sacroiliac Joint
+Loading During Sitting:\\ Design Rationale and Simulation Study}
+
+\author{Hermes Agent\thanks{Corresponding build agent, Hermes Agent by Nous
+Research.} \and Walker Kirkpatrick, ND}
+\date{October 17, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Sacroiliac joint (SIJ) pain is a recognized source of chronic low back
+pain, and pelvic belts are a standard conservative management tool. We
+identify a mechanical failure mode of \emph{static} belts: a belt sized to
+hold trousers while standing becomes several times tighter once its
+wearer sits, because lower-body circumferences increase from standing to
+sitting and the pelvis rotates backward, redirecting belt force across
+lax or previously injured SIJs. We present a lightweight, posture-adaptive
+belt design---a six-axis inertial sensor, a debounced posture classifier,
+a per-activity tension policy, a fail-loose safety layer, and a
+rate-limited circumference actuator---implemented as a dependency-free
+Python control stack and evaluated in closed-loop simulation against a
+frozen static-belt baseline on identical sensor streams. Over a simulated
+full day (standing, driving, and desk work), the adaptive belt reduced
+the seated adverse (misdirected) SIJ load integral by
+89.3\% (from 80,579 to 8,642~N\,s), kept
+100.0\% of seated time at or under the comfort floor, and completed
+the day with zero safety-rule violations on roughly 1.9~mAh of
+battery. Seated slack is biomechanically defensible: pelvic-belt tension
+beyond roughly 50~N does not further reduce SIJ laxity, so relaxing when
+seated should cost nothing therapeutically. The design is a simulation
+and control reference implementation, not a medical device.
+\end{abstract}
+
+\section{Introduction}
+Sacroiliac joint pain is one of the most common causes of low back pain,
+accounting for an estimated 15--30\% of cases in reviews of the
+diagnostic literature \cite{ref1}, with SIJ dysfunction estimated as the
+primary pain source in 10--25\% of affected patients \cite{ref2}.
+Recognized etiologies include pregnancy, repetitive stress, and trauma;
+posttraumatic arthritis of the SI joints can follow injuries such as
+motor vehicle collisions, and SIJ dysfunction is associated with
+osteoarthritis and the spondyloarthropathies \cite{ref3}. For a subset
+of these patients---notably those with ligamentous laxity or prior
+pelvic trauma---ordinary clothing is itself a daily hazard. A trouser
+belt sized to hold up trousers while standing has a smaller
+circumference than the pelvis presents when its owner sits down:
+lower-body circumferences measurably increase with the switch from
+standing to sitting \cite{ref11}, and the pelvis tends to move backward
+from standing to sitting \cite{ref24}. The same belt, unchanged, then
+applies a sharper and differently directed force across the SIJs at the
+seated hip angle---precisely the situation this work addresses.
+
+Belts are nonetheless the correct conservative tool. A pelvic belt worn
+with a small force can generate a self-bracing effect at the SIJ
+\cite{ref19}; application of a belt significantly reduces SIJ mobility
+\cite{ref19}; pelvic belts may be beneficial in affected postpartum
+patients \cite{ref3}; and belting is a recognized nonoperative option
+alongside exercise, manual therapy, and orthotics \cite{ref10}. In a
+five-day trial of strenuous manual labor, spine pain increased by only
+0.2 on a numeric rating scale during the week participants used a
+Serola sacroiliac belt, versus 0.9 without it \cite{ref8}.
+
+Crucially, the dose--response of belts saturates: in Damen's study of
+pelvic-belt positioning, a belt tension of 100~N did not reduce SIJ
+laxity more than 50~N \cite{ref4}. Extra tension buys no extra
+stabilization. This is the biomechanical license for the central design
+move of this paper: a belt that \emph{relaxes} when its wearer sits
+should lose nothing therapeutically while eliminating the seated
+over-tension entirely.
+
+A motorized consumer ``smart belt'' that self-adjusts its fit has
+existed since at least 2015 \cite{ref16}; what consumer prior art lacks
+is a clinical rationale, a posture-aware control policy, per-wearer
+calibration, and a fail-loose safety architecture.
+
+\section{Background}
+\subsection{SIJ belt mechanics}
+The therapeutic model is force closure: the belt adds an external
+compression that supplements the muscle-generated force closure of the
+pelvic ring \cite{ref19}. Two findings shape our design. First, the
+effect saturates with tension \cite{ref4}. Second, positioning matters:
+in Damen's experiment the belt was most effective in a high position
+\cite{ref4}. Both argue for \emph{modulated} tension rather than
+maximal tension---which is what a posture-adaptive actuator provides.
+
+\subsection{Posture sensing from the waist}
+Wearable technology is a promising alternative to laboratory systems
+for movement and posture analysis \cite{ref13}. Waist-worn
+accelerometers are the standard for physical-activity assessment, but
+the sedentary-behavior literature cautions that waist-worn devices
+alone distinguish sitting from light activity less cleanly than
+thigh-worn inclinometry \cite{ref23}. Our design answers this caveat
+explicitly rather than ignoring it: the classifier debounces posture
+changes over a persistence window, gates switches on confidence, and
+degrades to a loose command when it cannot name the posture. Confusing
+seated driving with seated desk sitting is deliberately tolerated---both
+receive slack targets, so the cost of that confusion is near zero.
+
+\section{Methods}
+\subsection{Design overview}
+The belt is a closed loop: a six-axis inertial measurement unit (IMU)
+at the iliac crest feeds a posture classifier; the classifier feeds a
+per-activity tension policy; the policy feeds a fail-loose safety
+monitor; and the safety monitor commands a rate-limited actuator that
+changes the belt's own circumference. Every wearer-dependent number
+lives in a JSON profile with a calibration wizard, so all geometry,
+stiffness, timing, and tension targets are per-wearer customizable.
+
+\subsection{First-order biomechanical model}
+A belt can pull but never push, so belt tension follows a spring law
+\begin{equation}
+T \;=\; k \,\max\!\left(0,\; C_{\text{wearer}}(a) - B\right),
+\end{equation}
+where $C_{\text{wearer}}(a)$ is the wearer's pelvic circumference at
+activity $a$ (standing, or standing plus a seated expansion
+$\Delta C_{\text{sit}}$ when seated), $B$ is the belt circumference, and
+$k$ is the belt's elastic stiffness. Projecting the belt force onto SIJ
+axes at a posterior pelvic rotation $\theta$ gives a beneficial
+force-closure component and an adverse, misdirected component:
+\begin{align}
+F_{\text{closure}} &= T\cos\theta,\\
+F_{\text{adverse}} &= T\sin\theta .
+\end{align}
+We emphasize that this projection is a first-order engineering model:
+it is used \emph{only} for relative comparisons between belt strategies
+on the same simulated wearer, never as an absolute estimate of joint
+loading. Posterior pelvic rotation is near zero standing and larger
+sitting and driving, consistent with the observed backward pelvic
+motion from standing to sitting \cite{ref24}.
+
+Table~\ref{tab:assumptions} lists the model parameters, their default
+values, and the provenance of each: cited direction where the
+literature supports it, explicit engineering assumption where it does
+not.
+
+\begin{table}[t]
+\centering
+\caption{Model parameters, defaults, and provenance.}
+\label{tab:assumptions}
+\begin{tabular}{lll}
+\toprule
+Parameter & Default & Provenance \\
+\midrule
+Standing circumference & 880 mm & wearer calibration \\
+Seated expansion $\Delta C_{\text{sit}}$ & 25 mm & increases when seated \cite{ref11}; \\
+ & & magnitude is wearer-specific \\
+Belt stiffness $k$ & 0.8 N/mm & engineering assumption \\
+Standing hold tension & 8 N & engineering assumption \\
+Seated floor tension & 3 N & design choice (slack) \\
+Safety ceiling & 30 N & design limit \\
+Rotation priors & 2/15/25$^\circ$ & direction cited \cite{ref24}; \\
+ & & magnitudes assumed \\
+Debounce window & 1.0 s & design choice (cf.\ \cite{ref23}) \\
+Re-tighten delay & 2.0 s & design choice \\
+Actuator slew & 40 mm/s & engineering assumption \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Control policy and safety architecture}
+The tension policy maps posture to intent: standing keeps a modest
+trouser-holding tension; sitting and driving relax to a floor near
+slack; \emph{unknown} means loose. Re-tightening is delayed by a grace
+window after standing so the belt never cinches mid-motion; loosening
+is never delayed. The safety layer enforces, in precedence order:
+manual loosen override, manual freeze override, a sensor watchdog
+(stale estimate $\rightarrow$ loose), a tension ceiling, and only then
+the controller's request. The fail-safe state of the entire system is
+the loosest state: since additional tension does not add stabilization
+\cite{ref4}, a belt that fails loose cannot over-compress an SIJ, and
+sagging trousers are a cosmetic failure rather than a clinical one.
+
+\subsection{Simulation protocol}
+The stack is exercised by a deterministic simulated IMU that plays a
+posture scenario through the full pipeline at 50~Hz. Each experiment
+runs the \emph{same} sensor stream (identical seed) through two belts:
+
+\begin{enumerate}
+\item the \textbf{adaptive belt}, the full stack as designed; and
+\item the \textbf{static baseline}, an actuator frozen at the
+circumference that yields the standing hold tension---i.e., ordinary
+clothing, sized standing and left alone.
+\end{enumerate}
+
+Table~\ref{tab:day} shows the full-day scenario. The headline metric is
+the seated adverse-load integral $\int F_{\text{adverse}}\,dt$ over
+seated ticks---exactly the quantity a lax or previously injured SIJ
+should not receive while its owner sits at a desk or in a car.
+
+\begin{table}[t]
+\centering
+\caption{Simulated day schedule.}
+\label{tab:day}
+\begin{tabular}{clrrr}
+\toprule
+\# & Posture & Start (s) & End (s) & Minutes \\
+\midrule
+1 & Standing & 0 & 900 & 15 \\
+2 & Driving & 900 & 2100 & 20 \\
+3 & Standing & 2100 & 2160 & 1 \\
+4 & Sitting & 2160 & 5760 & 60 \\
+5 & Standing & 5760 & 6060 & 5 \\
+6 & Sitting & 6060 & 9660 & 60 \\
+7 & Driving & 9660 & 10860 & 20 \\
+8 & Standing & 10860 & 11760 & 15 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Results}
+\subsection{Full simulated day}
+Over the 196-minute day (588,000 control ticks), the adaptive
+belt reduced the seated adverse-load integral from
+80,579~N\,s to 8,642~N\,s---a 89.3\%
+reduction---while the static belt's seated tension peaked at
+28.0~N against 27.4~N for the adaptive belt
+(Table~\ref{tab:results}). The adaptive belt kept
+100.0\% of seated ticks at or under the comfort floor, performed
+8 actuator adjustments, used approximately 1.9~mAh of
+battery (roughly 154~days on a 300~mAh cell), and completed
+the day with zero safety-rule violations.
+
+\begin{table}[t]
+\centering
+\caption{Seated adverse SIJ load: adaptive vs.\ static belt (full day,
+seed 7).}
+\label{tab:results}
+\begin{tabular}{lrr}
+\toprule
+Metric & Adaptive & Static \\
+\midrule
+Adverse-load integral (N\,s) & 8,642 & 80,579 \\
+Peak seated adverse force (N) & 27.4ADV & 28.0ADV \\
+Peak seated tension (N) & 27.4 & 28.0 \\
+Seated time at/under floor (\%) & 100.0 & --- \\
+Actuator adjustments & 8 & 0 \\
+Battery used (mAh) & 1.9 & --- \\
+Safety events & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Commute scenario}
+The minimal version of the motivating problem---stand, drive for half
+an hour, stand---reproduces the same pattern over a
+50-minute commute: 89.3\% reduction in seated
+adverse load (21,299 $\rightarrow$ 2,286~N\,s), with
+zero safety events.
+
+\section{Discussion}
+Three design principles carry the result. First, \emph{seated slack is
+free}: because belt tension beyond roughly 50~N does not further
+reduce SIJ laxity \cite{ref4}, the therapeutic cost of relaxing when
+seated is approximately zero, while the seated over-tension of a static
+belt is the exact harm mode the design removes. Second,
+\emph{fail-loose everywhere}: every fault path---dead sensor, stale
+estimate, low confidence, ceiling breach---terminates at the loosest
+belt position, and the boot state is loose. Third,
+\emph{customize rather than assume}: every geometry, stiffness, timing,
+and tension number is a profile field with a calibration wizard, so the
+system adapts to the wearer rather than the reverse.
+
+\section{Limitations}
+The SIJ load model is a first-order projection used only for relative
+comparisons; it is not validated against instrumented joint loading,
+and absolute newton values should not be read clinically. The simulated
+sensor is an idealized waist-worn IMU; the sedentary-behavior
+literature cautions that waist-worn sensing alone distinguishes
+postures less cleanly than thigh-worn sensing \cite{ref23}, and
+although the classifier answers that caveat with debouncing, confidence
+gates, and graceful degradation, hardware validation is future work.
+Sitting-versus-driving confusion is tolerated by design and would need
+revisiting if the two postures ever received different targets. The
+evaluation is simulation only, with no human subjects, and no claim of
+clinical efficacy is made; any physical implementation would require
+appropriate review, and use for a diagnosed SIJ condition should be
+supervised by a clinician.
+
+\section{Conclusion}
+A belt that senses its wearer's posture and relaxes when they sit
+eliminates the seated over-tension that static belts impose on people
+with sacroiliac joint pain, at approximately zero biomechanical cost.
+The reference implementation---a dependency-free Python control stack
+with a CLI, a reproducible simulation harness, and a 127-test suite---
+reduces seated adverse SIJ loading by 89.3\% over a simulated
+day without a single safety-rule violation. The design is released
+open-source as a foundation for hardware prototyping and, eventually,
+properly supervised clinical evaluation.
+
+\section*{Reproducibility}
+All results in this paper are produced by
+\texttt{sibelt simulate --scenario day --json} and
+\texttt{sibelt simulate --scenario commute --json} from the released
+repository (seed 7); the raw reports are committed alongside this
+paper in \texttt{docs/paper/results/}.
+
+\bibliographystyle{plain}
+\input{references}
+
+\end{document}

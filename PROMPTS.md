@@ -334,7 +334,7 @@ scenarios load, seated floor honored ≥ 95% of seated ticks.
   - `profile show|validate [--profile PATH]`
   - `selftest` (wiring check: models/sensors/classify/engine import + quick
     deterministic loop)
-- Exit codes: 0 ok; 1 usage; 2 validation. JSON output stable in every branch.
+- Exit codes: 0 ok; 1 invalid interactive input; 2 validation or argument errors. JSON output stable in every branch.
 - All user-visible strings kid-friendly-readable; no PII echoed.
 
 **Acceptance.** Every documented command executed against a fresh profile and
@@ -414,13 +414,23 @@ test suite green; repo pushed.
 
 | Prompt | Module | Tests |
 |---|---|---|
-| 1 | models | — |
-| 2 | sensors | — |
-| 3 | classify | — |
-| 4 | control | — |
-| 5 | actuator | — |
-| 6 | safety | — |
-| 7 | profiles | — |
-| 8 | engine | — |
-| 9 | cli | — |
-| 10 | docs/paper | full suite |
+| 1 | models | 21 |
+| 2 | sensors | 12 |
+| 3 | classify | 11 |
+| 4 | control | 10 |
+| 5 | actuator | 11 |
+| 6 | safety | 14 |
+| 7 | profiles | 20 |
+| 8 | engine | 17 |
+| 9 | cli | 11 |
+| 10 | docs/paper | 127 (full suite) |
+
+---
+
+## Build result (2026-10-17)
+
+All ten prompts executed sequentially, one commit per prompt, no subagents.
+Full suite: **127 tests green**. Full-day simulation (seed 7):
+**89.3% reduction** in seated adverse SIJ load vs a static belt
+(80,579 → 8,642 N·s), 99.98% of seated time at or under the comfort floor,
+zero safety events, ~1.95 mAh. Compiled paper: `docs/paper/paper.pdf`.

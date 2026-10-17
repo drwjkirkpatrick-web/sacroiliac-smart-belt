@@ -1,0 +1,26 @@
+{
+  "scenario": "commute",
+  "seed": 7,
+  "time_scale": 1.0,
+  "duration_s": 3000.0,
+  "ticks": 150000,
+  "smart": {
+    "adverse_integral_n_s": 2286.06,
+    "peak_adverse_n": 11.563,
+    "peak_seated_tension_n": 27.36,
+    "seated_ticks": 89996,
+    "seated_at_floor_pct": 99.96
+  },
+  "baseline": {
+    "adverse_integral_n_s": 21299.01,
+    "peak_adverse_n": 11.833,
+    "peak_seated_tension_n": 28.0,
+    "seated_ticks": 89996,
+    "seated_at_floor_pct": 0.0
+  },
+  "adverse_reduction_pct": 89.3,
+  "adjustments": 4,
+  "battery_mah": 0.6,
+  "safety_event_count": 0,
+  "hardware_mass_g": 95.0
+}

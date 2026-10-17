@@ -1,0 +1,26 @@
+{
+  "scenario": "day",
+  "seed": 7,
+  "time_scale": 1.0,
+  "duration_s": 11760.0,
+  "ticks": 588000,
+  "smart": {
+    "adverse_integral_n_s": 8642.46,
+    "peak_adverse_n": 11.563,
+    "peak_seated_tension_n": 27.36,
+    "seated_ticks": 480006,
+    "seated_at_floor_pct": 99.98
+  },
+  "baseline": {
+    "adverse_integral_n_s": 80579.47,
+    "peak_adverse_n": 11.833,
+    "peak_seated_tension_n": 28.0,
+    "seated_ticks": 480006,
+    "seated_at_floor_pct": 0.0
+  },
+  "adverse_reduction_pct": 89.3,
+  "adjustments": 8,
+  "battery_mah": 1.95,
+  "safety_event_count": 0,
+  "hardware_mass_g": 95.0
+}
